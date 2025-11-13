@@ -4,6 +4,7 @@ import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import Slider from "@mui/material/Slider";
+import LinearProgress from "@mui/material/LinearProgress";
 import Fab from "@mui/material/Fab";
 import Stack from "@mui/material/Stack";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
@@ -12,6 +13,8 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 function App() {
+  const [servoAngle, setServoAngle] = useState(90);
+
   const sendCommand = async (operation, state) => {
     try {
       const url = `http://192.168.4.1/${encodeURIComponent(
@@ -22,6 +25,20 @@ function App() {
       console.log(`Sent ${operation} ${state} `, res.status);
     } catch (err) {
       console.error("Command send failed", err);
+    }
+  };
+
+  // new: send servo angle
+  const sendServoAngle = async (angle) => {
+    try {
+      const a = Math.round(Number(angle)); // ensure natural number
+      const url = `http://192.168.4.1/rotor/servo?angle=${encodeURIComponent(
+        a
+      )}`;
+      const res = await fetch(url, { method: "GET" });
+      console.log(`Sent servo angle=${a}`, res.status);
+    } catch (err) {
+      console.error("Servo send failed", err);
     }
   };
 
@@ -61,6 +78,10 @@ function App() {
       <Paper elevation={3} sx={{ p: 3, width: 360 }}>
         <Typography variant="h6" align="center" gutterBottom>
           Remote Control
+        </Typography>
+        <br />
+        <Typography variant="h7" align="center" gutterBottom>
+          Wheels control
         </Typography>
 
         <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
@@ -112,6 +133,24 @@ function App() {
               <ArrowDownwardIcon />
             </Fab>
           </Stack>
+        </Box>
+
+        {/* new: servo control slider + progress */}
+        <Box sx={{ mt: 2 }}>
+          <Typography gutterBottom>Rotor control</Typography>
+
+          <Slider
+            value={servoAngle}
+            min={0}
+            max={180}
+            step={1} // natural numbers only
+            onChange={(e, val) => {
+              const v = Math.round(Number(val));
+              sendServoAngle(v);
+            }}
+            valueLabelDisplay="auto"
+            aria-labelledby="servo-slider"
+          />
         </Box>
       </Paper>
     </Box>

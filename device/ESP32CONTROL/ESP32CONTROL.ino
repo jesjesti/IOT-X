@@ -1,5 +1,7 @@
 #include <WiFi.h>
 #include <WebServer.h>
+#include <ESP32Servo.h>
+
 
 // Create Access Point credentials
 const char* ssid = "ESP32_Control_AP";
@@ -10,46 +12,28 @@ const char* password = "12345678";
 #define IN2 26
 #define IN3 27
 #define IN4 14
-#define ENA 32   // PWM pin for left motors
-#define ENB 33   // PWM pin for right motors
 
 // ===== Servo setup =====
-#define SERVO_PIN 21        // PWM signal wire to SG90
-#define SERVO_CHANNEL 2     // Use a new LEDC channel for servo
-#define SERVO_FREQ 50       // 50 Hz for servo
-#define SERVO_RES 16        // 16-bit resolution
-
-int motorSpeed = 100; // Default speed (0–255)
+#define ROTOR_SERVO_PIN 21   
 
 // Create web server on port 80
 WebServer server(80);
 
-// ===== Utility: Servo angle → duty =====
-uint32_t angleToDuty(int angle) {
-  int minUs = 500;
-  int maxUs = 2400;
-  int us = map(angle, 0, 180, minUs, maxUs);
-  uint32_t value = (uint32_t)((float)us / 20000.0 * ((1 << SERVO_RES) - 1));
-  return value;
-}
+Servo rotorServo;
+
 
 void stopMotors() {
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, LOW);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, LOW);
-  ledcWrite(0, 0);
-  ledcWrite(1, 0);
 }
-
 
 void moveForward() {
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
   digitalWrite(IN3, HIGH);
   digitalWrite(IN4, LOW);
-  ledcWrite(0, motorSpeed);
-  ledcWrite(1, motorSpeed);
 }
 
 void moveBackward() {
@@ -57,8 +41,6 @@ void moveBackward() {
   digitalWrite(IN2, HIGH);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
-  ledcWrite(0, motorSpeed);
-  ledcWrite(1, motorSpeed);
 }
 
 void rotateLeft() {
@@ -66,8 +48,6 @@ void rotateLeft() {
   digitalWrite(IN2, HIGH);
   digitalWrite(IN3, HIGH);
   digitalWrite(IN4, LOW);
-  ledcWrite(0, motorSpeed);
-  ledcWrite(1, motorSpeed);
 }
 
 void rotateRight() {
@@ -75,8 +55,6 @@ void rotateRight() {
   digitalWrite(IN2, LOW);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
-  ledcWrite(0, motorSpeed);
-  ledcWrite(1, motorSpeed);
 }
 
 
@@ -125,28 +103,11 @@ void handleRotateRight() {
   }
 }
 
-// Dynamic speed update
-void handleSpeed() {
-  if (server.hasArg("value")) {
-    int val = server.arg("value").toInt();
-    motorSpeed = constrain(val, 0, 255);
-    server.send(200, "text/plain", "Speed updated to " + String(motorSpeed));
-  } else {
-    server.send(400, "text/plain", "Missing 'value' parameter");
-  }
-}
-
-// ===== Servo control =====
-void handleServo() {
-  if (server.hasArg("angle")) {
-    int angle = server.arg("angle").toInt();
-    angle = constrain(angle, 0, 180);
-    uint32_t duty = angleToDuty(angle);
-    ledcWrite(SERVO_CHANNEL, duty);
-    server.send(200, "text/plain", "Servo moved to " + String(angle) + "°");
-    Serial.printf("Servo moved to %d°\n", angle);
-  } else {
-    server.send(400, "text/plain", "Missing 'angle' parameter");
+void handleRotorServo() {
+  int rotateDegree = server.arg("angle").toInt();
+  if(rotateDegree <=180 || rotateDegree >=0)
+  {
+    rotorServo.write(rotateDegree);
   }
 }
 
@@ -159,16 +120,14 @@ void handleRoot() {
 void setup() {
   Serial.begin(115200);
 
+  //Servo setup
+  rotorServo.attach(ROTOR_SERVO_PIN);
+
   // Pin setup
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
-
-  // PWM setup
-  ledcAttach(ENA, 1000, 8);  // channel 0 auto-assigned
-  ledcAttach(ENB, 1000, 8);  // channel 1 auto-assigned
-  ledcAttach(SERVO_PIN, SERVO_FREQ, SERVO_RES);  // Servo → channel 2 (50Hz, 16-bit)
 
   stopMotors();
 
@@ -183,8 +142,7 @@ void setup() {
   server.on("/backward", handleBackward);
   server.on("/rotateLeft", handleRotateLeft);
   server.on("/rotateRight", handleRotateRight);
-  server.on("/speed", handleSpeed);
-  server.on("/servo", handleServo);
+  server.on("/rotor/servo", handleRotorServo);
 
   server.begin();
   Serial.println("HTTP Server started");
