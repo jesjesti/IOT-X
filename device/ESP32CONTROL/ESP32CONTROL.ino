@@ -13,10 +13,25 @@ const char* password = "12345678";
 #define ENA 32   // PWM pin for left motors
 #define ENB 33   // PWM pin for right motors
 
+// ===== Servo setup =====
+#define SERVO_PIN 21        // PWM signal wire to SG90
+#define SERVO_CHANNEL 2     // Use a new LEDC channel for servo
+#define SERVO_FREQ 50       // 50 Hz for servo
+#define SERVO_RES 16        // 16-bit resolution
+
 int motorSpeed = 100; // Default speed (0–255)
 
 // Create web server on port 80
 WebServer server(80);
+
+// ===== Utility: Servo angle → duty =====
+uint32_t angleToDuty(int angle) {
+  int minUs = 500;
+  int maxUs = 2400;
+  int us = map(angle, 0, 180, minUs, maxUs);
+  uint32_t value = (uint32_t)((float)us / 20000.0 * ((1 << SERVO_RES) - 1));
+  return value;
+}
 
 void stopMotors() {
   digitalWrite(IN1, LOW);
@@ -121,6 +136,20 @@ void handleSpeed() {
   }
 }
 
+// ===== Servo control =====
+void handleServo() {
+  if (server.hasArg("angle")) {
+    int angle = server.arg("angle").toInt();
+    angle = constrain(angle, 0, 180);
+    uint32_t duty = angleToDuty(angle);
+    ledcWrite(SERVO_CHANNEL, duty);
+    server.send(200, "text/plain", "Servo moved to " + String(angle) + "°");
+    Serial.printf("Servo moved to %d°\n", angle);
+  } else {
+    server.send(400, "text/plain", "Missing 'angle' parameter");
+  }
+}
+
 // Root status
 void handleRoot() {
   server.send(200, "text/plain", "ESP32 Robot Controller Active");
@@ -139,6 +168,7 @@ void setup() {
   // PWM setup
   ledcAttach(ENA, 1000, 8);  // channel 0 auto-assigned
   ledcAttach(ENB, 1000, 8);  // channel 1 auto-assigned
+  ledcAttach(SERVO_PIN, SERVO_FREQ, SERVO_RES);  // Servo → channel 2 (50Hz, 16-bit)
 
   stopMotors();
 
@@ -154,6 +184,7 @@ void setup() {
   server.on("/rotateLeft", handleRotateLeft);
   server.on("/rotateRight", handleRotateRight);
   server.on("/speed", handleSpeed);
+  server.on("/servo", handleServo);
 
   server.begin();
   Serial.println("HTTP Server started");

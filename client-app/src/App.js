@@ -1,4 +1,3 @@
-// ...existing code...
 import React, { useState } from "react";
 import "./App.css";
 import Box from "@mui/material/Box";
@@ -13,12 +12,40 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 function App() {
-  const [speed, setSpeed] = useState(50);
-
-  const handleMove = (dir) => {
-    // Replace with actual command/send logic (WebSocket/HTTP)
-    console.log(`Move ${dir} at speed ${speed}`);
+  const sendCommand = async (operation, state) => {
+    try {
+      const url = `http://192.168.4.1/${encodeURIComponent(
+        operation
+      )}?state=${encodeURIComponent(state)}`;
+      // fire-and-forget; log result for debug
+      const res = await fetch(url, { method: "GET" });
+      console.log(`Sent ${operation} ${state} `, res.status);
+    } catch (err) {
+      console.error("Command send failed", err);
+    }
   };
+
+  // call when press (start)
+  const handlePressStart = (operation) => {
+    sendCommand(operation, "start");
+  };
+
+  // call when release/leave (stop)
+  const handlePressStop = (operation) => {
+    sendCommand(operation, "stop");
+  };
+
+  // helper props for a press-and-hold control (mouse + touch)
+  const pressHandlers = (operation) => ({
+    onMouseDown: () => handlePressStart(operation),
+    onMouseUp: () => handlePressStop(operation),
+    onMouseLeave: () => handlePressStop(operation),
+    onTouchStart: (e) => {
+      e.preventDefault();
+      handlePressStart(operation);
+    },
+    onTouchEnd: () => handlePressStop(operation),
+  });
 
   return (
     <Box
@@ -41,8 +68,8 @@ function App() {
             <Fab
               color="primary"
               aria-label="forward"
-              onClick={() => handleMove("forward")}
               size="medium"
+              {...pressHandlers("forward")}
             >
               <ArrowUpwardIcon />
             </Fab>
@@ -50,9 +77,9 @@ function App() {
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
               <Fab
                 color="primary"
-                aria-label="left"
-                onClick={() => handleMove("left")}
+                aria-label="rotateLeft"
                 size="medium"
+                {...pressHandlers("rotateLeft")}
               >
                 <ArrowBackIcon />
               </Fab>
@@ -60,18 +87,17 @@ function App() {
               <Fab
                 color="secondary"
                 aria-label="stop"
-                onClick={() => handleMove("stop")}
+                onClick={() => sendCommand("stop", "stop")}
                 size="medium"
               >
-                {/* simple stop is center empty Fab */}
                 <Typography sx={{ fontWeight: 700 }}>●</Typography>
               </Fab>
 
               <Fab
                 color="primary"
-                aria-label="right"
-                onClick={() => handleMove("right")}
+                aria-label="rotateRight"
                 size="medium"
+                {...pressHandlers("rotateRight")}
               >
                 <ArrowForwardIcon />
               </Fab>
@@ -80,25 +106,12 @@ function App() {
             <Fab
               color="primary"
               aria-label="backward"
-              onClick={() => handleMove("backward")}
               size="medium"
+              {...pressHandlers("backward")}
             >
               <ArrowDownwardIcon />
             </Fab>
           </Stack>
-        </Box>
-
-        <Box sx={{ mt: 1 }}>
-          <Typography gutterBottom>Speed: {speed}</Typography>
-          <Slider
-            value={speed}
-            onChange={(e, val) => setSpeed(val)}
-            aria-labelledby="speed-slider"
-            min={0}
-            max={100}
-            step={1}
-            valueLabelDisplay="auto"
-          />
         </Box>
       </Paper>
     </Box>
@@ -106,4 +119,3 @@ function App() {
 }
 
 export default App;
-// ...existing code...
