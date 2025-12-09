@@ -13,7 +13,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 function App() {
-  const [servoAngle, setServoAngle] = useState(90);
+  const [servoAngle, setServoAngle] = useState(0);
 
   const sendCommand = async (operation, state) => {
     try {
@@ -146,6 +146,7 @@ function App() {
             step={1} // natural numbers only
             onChange={(e, val) => {
               const v = Math.round(Number(val));
+              setServoAngle(v);
               sendServoAngle(v);
             }}
             valueLabelDisplay="auto"
