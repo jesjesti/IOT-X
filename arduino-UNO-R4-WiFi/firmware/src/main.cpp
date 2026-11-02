@@ -6,21 +6,13 @@
 #include "LEDService.h"
 #include "WiFiManager.h"
 
-#if __has_include("Secrets.h")
-#include "Secrets.h"
-#else
-constexpr char WIFI_SSID[] = "";
-constexpr char WIFI_PASSWORD[] = "";
-#endif
-
 namespace {
 
 WiFiManager wifiManager;
 LEDController ledController;
 LEDService ledService(ledController);
-ApiRouter apiRouter(ledService);
+ApiRouter apiRouter(ledService, wifiManager);
 HttpServer httpServer(apiRouter);
-bool httpServerStarted = false;
 
 }  // namespace
 
@@ -37,19 +29,13 @@ void setup() {
   // Uncomment to start the standalone LED blink when the board boots.
   // ledService.startBlinking(200);
 
-  wifiManager.begin(WIFI_SSID, WIFI_PASSWORD);
+  wifiManager.begin();
+  httpServer.begin();
 }
 
 void loop() {
   wifiManager.update();
 
-  if (wifiManager.isConnected()) {
-    if (!httpServerStarted) {
-      httpServer.begin();
-      httpServerStarted = true;
-    }
-    httpServer.handleClient();
-  }
-
+  httpServer.handleClient();
   ledService.update();
 }

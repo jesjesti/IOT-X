@@ -72,6 +72,7 @@ h2 {
 }
 
 .connection-panel,
+.wifi-panel,
 .controls-panel,
 .status-panel {
   padding: 24px;
@@ -79,6 +80,121 @@ h2 {
 
 .connection-panel {
   margin-bottom: 20px;
+}
+
+.wifi-panel {
+  margin-bottom: 20px;
+}
+
+.wifi-panel label {
+  display: block;
+  margin: 18px 0 8px;
+  color: #536981;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.field-hint {
+  margin: 8px 0 0;
+  color: #8190a3;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.wifi-panel select,
+.text-field {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 13px;
+  border: 1px solid #d8e2ee;
+  border-radius: 9px;
+  outline: 0;
+  background: #fbfdff;
+  color: #203650;
+  font: inherit;
+  font-size: 14px;
+}
+
+.wifi-panel select:focus,
+.text-field:focus {
+  border-color: #4280e8;
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 12%);
+}
+
+.wifi-current {
+  margin: -4px 0 18px;
+  color: #647991;
+  font-size: 13px;
+}
+
+.wifi-security-note {
+  margin: -4px 0 18px;
+  padding: 11px 13px;
+  border: 1px solid #f1dfb6;
+  border-radius: 9px;
+  background: #fff9eb;
+  color: #846622;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.wifi-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.wifi-actions .action-button {
+  min-height: 44px;
+}
+
+.provision-button {
+  width: 100%;
+  margin-top: 18px;
+}
+
+.reset-wifi-button {
+  border-color: #e7c6c8;
+  background: #fff7f7;
+  color: #a63d46;
+}
+
+.reset-wifi-button:hover:not(:disabled) {
+  background: #ffeded;
+  box-shadow: none;
+}
+
+.wifi-badge {
+  padding: 7px 10px;
+  border: 1px solid #f1dfb6;
+  border-radius: 999px;
+  background: #fff9eb;
+  color: #96722b;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.wifi-badge.is-connected {
+  border-color: #b7ead7;
+  background: #edfbf5;
+  color: #087c56;
+}
+
+.success-message {
+  margin: 16px 0 0;
+  padding: 11px 13px;
+  border: 1px solid #b7ead7;
+  border-radius: 9px;
+  background: #edfbf5;
+  color: #087c56;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.global-error {
+  margin: 0 0 20px;
 }
 
 .section-heading {
@@ -372,6 +488,7 @@ h2 {
   }
 
   .connection-panel,
+  .wifi-panel,
   .controls-panel,
   .status-panel {
     padding: 20px;
